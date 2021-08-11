@@ -88,7 +88,7 @@ contract AREA {
         debt -= _amount;
         emit Repay(msg.sender, _amount);
       } else {
-        uint repayAmount = _amount * 1 ether / repayFactor;
+        uint repayAmount = _amount * repayFactor / 1 ether;
         dola.burn(repayAmount);
         debt -= repayAmount;
         emit Repay(msg.sender, _amount);
