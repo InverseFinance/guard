@@ -188,6 +188,12 @@ contract Guard {
         incidentsLength++;
     }
 
+    function changeOracle(uint _planID, address _oracle) public {
+        require(msg.sender == plans[_planID].oracle, "ONLY PLAN ORACLE CAN CHANGE ORACLE");
+        require(_oracle != address(0), "ORACLE CANNOT BE ADDRESS ZERO");
+        plans[_planID].oracle = _oracle;
+    }
+
     function claimIncident(uint _incidentID, uint _positionID) public {
         require(incidentClaimedPerPosition[_incidentID][_positionID] == false, "INCIDENT ALREADY CLAIMED");
         Position memory position = positions[_positionID];
