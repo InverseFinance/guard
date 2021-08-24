@@ -104,17 +104,20 @@ contract Guard {
             minDuration:_minDuration,
             maxDuration:_maxDuration
         });
+        emit CreatePlan(plansLength, _title, _conditions, _oracle, _ceiling, _minCovered, _minDuration, _maxDuration);
         plansLength++;
     }
 
     function pausePlan(uint _planID) public {
         require(msg.sender == guardian || msg.sender == operator, "ONLY GUARDIAN OR OPERATOR CAN PAUSE");
         plans[_planID].paused = true;
+        emit PausePlan(_planID);
     }
 
     function unpausePlan(uint _planID) public {
         require(msg.sender == guardian || msg.sender == operator, "ONLY GUARDIAN OR OPERATOR CAN UNPAUSE");
         plans[_planID].paused = false;
+        emit UnpausePlan(_planID);
     }
 
     function setPlan(
@@ -136,6 +139,7 @@ contract Guard {
         plan.minDuration = _minDuration;
         plan.maxDuration = _maxDuration;
         plans[_planID] = plan;
+        emit SetPlan(plansLength, _title, _conditions, _ceiling, _minCovered, _minDuration, _maxDuration);
     }
 
     function openPosition(uint _planID, uint _amount, uint _duration) public {
@@ -161,6 +165,7 @@ contract Guard {
             closed:false
         });
         userPositions[msg.sender].push(positionsLength);
+        emit OpenPosition(msg.sender, _planID, _amount, _duration);
         positionsLength++;
     }
 
@@ -170,6 +175,7 @@ contract Guard {
             if(position.endTimestamp < block.timestamp && position.closed == false) {
                 plans[position.planID].usage -= position.amount;
                 position.closed = true;
+                emit ClosePosition(position.planID);
             }
         }
     }
@@ -185,6 +191,7 @@ contract Guard {
             claimFactor:_claimFactor
         });
         incidents[incidentsLength] = incident;
+        emit CreateIncident(msg.sender, _planID, incidentsLength, _timestamp, _claimFactor);
         incidentsLength++;
     }
 
@@ -192,6 +199,7 @@ contract Guard {
         require(msg.sender == plans[_planID].oracle, "ONLY PLAN ORACLE CAN CHANGE ORACLE");
         require(_oracle != address(0), "ORACLE CANNOT BE ADDRESS ZERO");
         plans[_planID].oracle = _oracle;
+        emit ChangeOracle(_planID, _oracle);
     }
 
     function claimIncident(uint _incidentID, uint _positionID) public {
@@ -209,6 +217,16 @@ contract Guard {
         AREA.borrow(msg.sender, compensation);
         positions[_positionID].claimed += compensation;
         incidentClaimedPerPosition[_incidentID][_positionID] = true;
+        emit ClaimIncident(msg.sender, _incidentID, _positionID);
     }
 
+    event CreatePlan(uint indexed _planID, string _title, string _description, address _oracle, uint _ceiling, uint _minCovered, uint _minDuration, uint _maxDuration);
+    event SetPlan(uint indexed _planID, string _title, string _description, uint _ceiling, uint _minCovered, uint _minDuration, uint _maxDuration);
+    event PausePlan(uint indexed _planID);
+    event UnpausePlan(uint indexed _planID);
+    event OpenPosition(address indexed user, uint indexed _planID, uint _amount, uint _duration);
+    event ClosePosition(uint indexed _planID);
+    event CreateIncident(address indexed user, uint indexed _planId, uint incidentID, uint _timestamp, uint _claimFactor);
+    event ChangeOracle(uint indexed _planID, address _oracle);
+    event ClaimIncident(address indexed user, uint indexed _incidentID, uint indexed _positionID);
 }
